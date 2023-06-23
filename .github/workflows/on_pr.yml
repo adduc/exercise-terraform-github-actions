@@ -30,8 +30,6 @@ jobs:
         run: terraform init
       - name: Terraform plan
         run: terraform plan -out=tfplan
-      - name: Terraform show
-        run: terraform show -json tfplan
       - name: Prepare AWS
         run: |
           mkdir ~/.aws
