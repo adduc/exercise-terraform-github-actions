@@ -21,6 +21,7 @@ jobs:
     steps:
       - name: Checkout repository
         run: |
+          chown root:root .
           git init
           git remote add origin "https://oauth:${{ github.token }}@github.com/${{ github.repository }}.git"
           git fetch origin --depth=1 ${{ github.ref }}
