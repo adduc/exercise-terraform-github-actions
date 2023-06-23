@@ -12,6 +12,7 @@ on:
 jobs:
   plan:
     runs-on: ubuntu-22.04
+    permissions: { id-token: write, contents: read }
     container:
       image: ockawin/v1-app-infra-ci:edge-amd64
       options: --pid host --ipc host
@@ -41,7 +42,5 @@ jobs:
         run: |
           alias aws='aws --endpoint-url ${{ secrets.ENDPOINT_URL }}'
           aws s3 cp tfplan s3://${{ secrets.BUCKET }}/${{ github.repository }}/${{ github.sha }}.tfplan
-
-
 
 # @todo check for drift, exit if not
