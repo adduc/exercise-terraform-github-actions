@@ -1,0 +1,47 @@
+name: Terraform Plan and Apply
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 0 * * 1" # every Monday at 00:00 UTC
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  plan:
+    runs-on: ubuntu-22.04
+    container:
+      image: ockawin/v1-app-infra-ci:edge-amd64
+      options: --pid host --ipc host
+    defaults:
+      run: { shell: sh }
+    steps:
+      - name: Checkout repository
+        run: |
+          git init
+          git remote add origin "https://oauth:${{ github.token }}@github.com/${{ github.repository }}.git"
+          git fetch origin --depth=1 ${{ github.ref }}
+          git reset --hard FETCH_HEAD
+      - name: Terraform Init
+        run: terraform init
+      - name: Terraform plan
+        run: terraform plan -out=tfplan
+      - name: Terraform show
+        run: terraform show -json tfplan
+      - name: Prepare AWS
+        run: |
+          mkdir ~/.aws && touch ~/.aws/credentials
+          aws configure set default.s3.signature_version s3v4
+          echo "[default]" >> ~/.aws/credentials
+          echo "aws_access_key_id=${{ secrets.ACCESS_KEY_ID }}" >> ~/.aws/credentials
+          echo "aws_secret_access_key=${{ secrets.SECRET_ACCESS_KEY }}" >> ~/.aws/credentials
+      - name: Upload tfplan to S3
+        run: |
+          alias aws='aws --endpoint-url ${{ secrets.ENDPOINT_URL }}'
+          aws s3 cp tfplan s3://${{ secrets.BUCKET }}/${{ github.repository }}/${{ github.sha }}.tfplan
+
+
+
+# @todo check for drift, exit if not
