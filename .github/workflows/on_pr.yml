@@ -64,6 +64,9 @@ jobs:
             exit 1
           fi
 
+      - name: Prepare job summary
+        run: terraform show -no-color tfplan >> "$GITHUB_SUMMARY"
+
       - name: Upload tfplan to S3
         if: steps.plan.outputs.exit_code == 2
         run: |
