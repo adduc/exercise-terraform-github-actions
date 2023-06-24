@@ -18,18 +18,9 @@ jobs:
       options: --pid host --ipc host
     defaults:
       run: { shell: sh }
+    outputs:
+      exit_code: ${{ steps.plan.outputs.exit_code }}
     steps:
-      - name: Checkout repository
-        run: |
-          chown root:root .
-          git init
-          git remote add origin "https://oauth:${{ github.token }}@github.com/${{ github.repository }}.git"
-          git fetch origin --depth=1 ${{ github.ref }}
-          git reset --hard FETCH_HEAD
-      - name: Terraform Init
-        run: terraform init
-      - name: Terraform plan
-        run: terraform plan -out=tfplan
       - name: Prepare AWS
         run: |
           mkdir ~/.aws
@@ -40,9 +31,39 @@ jobs:
           echo "[default]" >> ~/.aws/credentials
           echo "aws_access_key_id=${{ secrets.ACCESS_KEY_ID }}" >> ~/.aws/credentials
           echo "aws_secret_access_key=${{ secrets.SECRET_ACCESS_KEY }}" >> ~/.aws/credentials
+      - name: Checkout repository
+        run: |
+          chown root:root .
+          git init
+          git remote add origin "https://oauth:${{ github.token }}@github.com/${{ github.repository }}.git"
+          git fetch origin --depth=1 ${{ github.ref }}
+          git reset --hard FETCH_HEAD
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Dummy Import to test no changes
+        run: terraform import random_password.password asdf
+
+      - name: Terraform plan
+        id: plan
+        run: |
+          terraform plan -out=tfplan --detailed-exitcode
+          EXIT_CODE=$?
+
+          # @see https://developer.hashicorp.com/terraform/cli/commands/plan#detailed-exitcode
+          # 0 = Succeeded with empty diff (no changes)
+          # 1 = Error
+          # 2 = Succeeded with non-empty diff (changes present)
+
+          echo "exit_code=$EXIT_CODE" >> "$GITHUB_OUTPUT"
+
+          if [ "$EXIT_CODE" -eq 1 ] || [ "$EXIT_CODE" -ge 3 ]; then
+            >&2 echo "Error: terraform plan failed"
+            exit 1
+          fi
+
       - name: Upload tfplan to S3
+        if: steps.plan.outputs.exit_code == 0
         run: |
           alias aws='aws --endpoint-url ${{ secrets.ENDPOINT_URL }}'
           aws s3 cp tfplan s3://${{ secrets.BUCKET }}/${{ github.repository }}/${{ github.sha }}.tfplan
-
-# @todo check for drift, exit if not
