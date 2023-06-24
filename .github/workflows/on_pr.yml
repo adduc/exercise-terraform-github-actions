@@ -42,13 +42,13 @@ jobs:
         run: terraform init
 
       - name: Dummy Import to test no changes
-        run: terraform import random_password.password asdf
+        run: terraform import random_password.password asdfasdfasdfasdf
 
       - name: Terraform plan
         id: plan
         run: |
-          terraform plan -out=tfplan --detailed-exitcode
-          EXIT_CODE=$?
+          terraform plan -out=tfplan --detailed-exitcode >> $GITHUB_STEP_SUMMARY \
+            && EXIT_CODE=$? || EXIT_CODE=$?
 
           # @see https://developer.hashicorp.com/terraform/cli/commands/plan#detailed-exitcode
           # 0 = Succeeded with empty diff (no changes)
