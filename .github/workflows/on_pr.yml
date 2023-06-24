@@ -21,8 +21,7 @@ jobs:
     outputs:
       exit_code: ${{ steps.plan.outputs.exit_code }}
     steps:
-      - &step_prepare_aws
-        name: Prepare AWS
+      - name: Prepare AWS
         run: |
           mkdir ~/.aws
           echo "[default]" >> ~/.aws/config
@@ -33,8 +32,7 @@ jobs:
           echo "aws_access_key_id=${{ secrets.ACCESS_KEY_ID }}" >> ~/.aws/credentials
           echo "aws_secret_access_key=${{ secrets.SECRET_ACCESS_KEY }}" >> ~/.aws/credentials
 
-      - &step_checkout_repository
-        name: Checkout repository
+      - name: Checkout repository
         run: |
           chown root:root .
           git init
@@ -42,8 +40,7 @@ jobs:
           git fetch origin --depth=1 ${{ github.ref }}
           git reset --hard FETCH_HEAD
 
-      - &step_terraform_init
-        name: Terraform Init
+      - name: Terraform Init
         run: terraform init
 
       # - name: Dummy Import to test no changes
@@ -85,16 +82,34 @@ jobs:
     defaults:
       run: { shell: sh }
     steps:
-      - *step_prepare_aws
-      - *step_checkout_repository
+      - name: Prepare AWS
+        run: |
+          mkdir ~/.aws
+          echo "[default]" >> ~/.aws/config
+          echo "region = us-east-1" >> ~/.aws/config
+          echo "s3 =" >> ~/.aws/config
+          echo "    signature_version = s3v4" >> ~/.aws/config
+          echo "[default]" >> ~/.aws/credentials
+          echo "aws_access_key_id=${{ secrets.ACCESS_KEY_ID }}" >> ~/.aws/credentials
+          echo "aws_secret_access_key=${{ secrets.SECRET_ACCESS_KEY }}" >> ~/.aws/credentials
+
+      - name: Checkout repository
+        run: |
+          chown root:root .
+          git init
+          git remote add origin "https://oauth:${{ github.token }}@github.com/${{ github.repository }}.git"
+          git fetch origin --depth=1 ${{ github.ref }}
+          git reset --hard FETCH_HEAD
+
       - name: Pull tfplan from S3
         run: |
           alias aws='aws --endpoint-url ${{ secrets.ENDPOINT_URL }}'
           aws s3 cp s3://${{ secrets.BUCKET }}/${{ github.repository }}/${{ github.sha }}.tar.gz tfplan.tar.gz
           tar xf tfplan.tar.gz
-      - *step_terraform_init
+
       - name: Terraform Show
         run: terraform show tfplan
+
       - name: Terraform Apply
         run: terraform apply -auto-approve tfplan
 
