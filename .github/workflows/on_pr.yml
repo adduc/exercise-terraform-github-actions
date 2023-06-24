@@ -89,10 +89,19 @@ jobs:
           echo "[default]" >> ~/.aws/credentials
           echo "aws_access_key_id=${{ secrets.ACCESS_KEY_ID }}" >> ~/.aws/credentials
           echo "aws_secret_access_key=${{ secrets.SECRET_ACCESS_KEY }}" >> ~/.aws/credentials
+      - name: Checkout repository
+        run: |
+          chown root:root .
+          git init
+          git remote add origin "https://oauth:${{ github.token }}@github.com/${{ github.repository }}.git"
+          git fetch origin --depth=1 ${{ github.ref }}
+          git reset --hard FETCH_HEAD
       - name: Pull tfplan from S3
         run: |
           alias aws='aws --endpoint-url ${{ secrets.ENDPOINT_URL }}'
           aws s3 cp s3://${{ secrets.BUCKET }}/${{ github.repository }}/${{ github.sha }}.tfplan tfplan
+      - name: Terraform Init
+        run: terraform init
       - name: Terraform Show
         run: terraform show tfplan
       - name: Terraform Apply
