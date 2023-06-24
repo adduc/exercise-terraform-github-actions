@@ -41,8 +41,8 @@ jobs:
       - name: Terraform Init
         run: terraform init
 
-      - name: Dummy Import to test no changes
-        run: terraform import random_password.password asdfasdfasdfasdf
+      # - name: Dummy Import to test no changes
+      #   run: terraform import random_password.password asdfasdfasdfasdf
 
       - name: Terraform plan
         id: plan
