@@ -47,8 +47,10 @@ jobs:
       - name: Terraform plan
         id: plan
         run: |
-          terraform plan -out=tfplan --detailed-exitcode >> $GITHUB_STEP_SUMMARY \
+          terraform plan -out=tfplan --detailed-exitcode \
             && EXIT_CODE=$? || EXIT_CODE=$?
+
+          echo "exit_code=$EXIT_CODE"
 
           # @see https://developer.hashicorp.com/terraform/cli/commands/plan#detailed-exitcode
           # 0 = Succeeded with empty diff (no changes)
@@ -67,3 +69,6 @@ jobs:
         run: |
           alias aws='aws --endpoint-url ${{ secrets.ENDPOINT_URL }}'
           aws s3 cp tfplan s3://${{ secrets.BUCKET }}/${{ github.repository }}/${{ github.sha }}.tfplan
+
+
+# @todo step summary (no color? port color to latex color?)
