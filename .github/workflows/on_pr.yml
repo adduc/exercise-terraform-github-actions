@@ -68,5 +68,36 @@ jobs:
           alias aws='aws --endpoint-url ${{ secrets.ENDPOINT_URL }}'
           aws s3 cp tfplan s3://${{ secrets.BUCKET }}/${{ github.repository }}/${{ github.sha }}.tfplan
 
+  apply:
+    needs: plan
+    environment: production
+    runs-on: ubuntu-22.04
+    container:
+      image: ockawin/v1-app-infra-ci:edge-amd64
+      options: --pid host --ipc host
+    defaults:
+      run: { shell: sh }
+    outputs:
+      exit_code: ${{ steps.plan.outputs.exit_code }}
+    steps:
+      - name: Prepare AWS
+        run: |
+          mkdir ~/.aws
+          echo "[default]" >> ~/.aws/config
+          echo "region = us-east-1" >> ~/.aws/config
+          echo "s3 =" >> ~/.aws/config
+          echo "    signature_version = s3v4" >> ~/.aws/config
+          echo "[default]" >> ~/.aws/credentials
+          echo "aws_access_key_id=${{ secrets.ACCESS_KEY_ID }}" >> ~/.aws/credentials
+          echo "aws_secret_access_key=${{ secrets.SECRET_ACCESS_KEY }}" >> ~/.aws/credentials
+      - name: Pull tfplan from S3
+        run: |
+          alias aws='aws --endpoint-url ${{ secrets.ENDPOINT_URL }}'
+          aws s3 cp s3://${{ secrets.BUCKET }}/${{ github.repository }}/${{ github.sha }}.tfplan tfplan
+      - name: Terraform Show
+        run: terraform show tfplan
+      - name: Terraform Apply
+        run: terraform apply -auto-approve tfplan
+
 
 # @todo step summary (no color? port color to latex color?)
