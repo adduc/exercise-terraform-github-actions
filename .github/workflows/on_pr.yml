@@ -11,6 +11,9 @@ on:
 
 jobs:
   plan:
+    strategy:
+      matrix:
+        environment: [staging, production]
     runs-on: ubuntu-22.04
     permissions: { id-token: write, contents: read }
     container:
@@ -81,7 +84,10 @@ jobs:
           aws s3 cp tfplan.tar.gz s3://${{ secrets.BUCKET }}/${{ github.repository }}/${{ github.sha }}.tar.gz
 
   apply:
-    needs: plan
+    strategy:
+      matrix:
+        environment: [staging, production]
+    needs: plan-${{ matrix.environment }}
     if: needs.plan.outputs.exit_code == 2
     environment: production
     runs-on: ubuntu-22.04
