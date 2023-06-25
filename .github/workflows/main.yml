@@ -13,6 +13,8 @@ jobs:
   deploy:
     permissions: { id-token: write, contents: read }
     strategy:
+      # allow other environments to continue if one fails
+      fail-fast: false
       matrix:
         environment:
           - staging
