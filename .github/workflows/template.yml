@@ -133,20 +133,6 @@ jobs:
           git fetch origin --depth=1 ${{ github.ref }}
           git reset --hard FETCH_HEAD
 
-      - name: Prepare Terraform to use cache
-        run: |
-          echo 'plugin_cache_dir="$HOME/.terraform.d/plugin-cache"' > ~/.terraformrc
-          mkdir -p ~/.terraform.d/plugin-cache
-
-      - name: Setup Terraform Cache
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.terraform.d/plugin-cache
-          key: ${{ runner.os }}-terraform-${{ hashFiles('**/.terraform.lock.hcl') }}
-          restore-keys: |
-            ${{ runner.os }}-terraform-
-
       - name: Pull tfplan from S3
         run: |
           alias aws='aws --endpoint-url ${{ secrets.ENDPOINT_URL }}'

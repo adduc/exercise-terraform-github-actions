@@ -10,7 +10,7 @@ on:
     branches: [main]
 
 jobs:
-  plan-and-apply:
+  deploy:
     permissions: { id-token: write, contents: read }
     strategy:
       matrix:
