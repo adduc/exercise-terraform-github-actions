@@ -87,7 +87,7 @@ jobs:
       - name: Prepare job summary
         run: |
           (
-            echo "# Terraform Plan";
+            echo "# Terraform Plan (${{ inputs.environment }}))";
             echo '```';
             terraform show -no-color tfplan;
             echo '```';
@@ -143,8 +143,13 @@ jobs:
         run: terraform show tfplan
 
       - name: Terraform Apply
-        run: terraform apply -auto-approve tfplan
-# @todo use provider cache
-# @todo step summary (no color? port color to latex color?)
+        run: |
+          (
+            echo "# Terraform Apply (${{ inputs.environment }})";
+            echo '```';
+            terraform apply -auto-approve -no-color tfplan;
+            echo '```';
+          ) | tee "$GITHUB_STEP_SUMMARY"
+
+# @todo use color for step summary (convert to latex color markdown)
 # @todo cancel old jobs on new push
-# @todo step summary for apply
