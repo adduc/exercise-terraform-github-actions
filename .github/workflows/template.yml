@@ -89,7 +89,7 @@ jobs:
   apply:
     needs: plan
     if: needs.plan.outputs.exit_code == 2
-    environment: ${{ inputs.environment }}}
+    environment: ${{ inputs.environment }}
     runs-on: ubuntu-22.04
     container:
       image: ockawin/v1-app-infra-ci:edge-amd64
