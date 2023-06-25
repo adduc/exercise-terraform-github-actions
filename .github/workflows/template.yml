@@ -96,7 +96,7 @@ jobs:
       - name: Upload tfplan to S3
         if: steps.plan.outputs.exit_code == 2
         run: |
-          tar -czf tfplan.tar.gz --exclude .git --exclude .github ./
+          tar -czf tfplan.tar.gz --exclude tfplan.tar.gz --exclude .git --exclude .github ./
           alias aws='aws --endpoint-url ${{ secrets.ENDPOINT_URL }}'
           aws s3 cp tfplan.tar.gz s3://${{ secrets.BUCKET }}/${{ github.repository }}/${{ github.sha }}-${{ inputs.environment }}.tar.gz
 
