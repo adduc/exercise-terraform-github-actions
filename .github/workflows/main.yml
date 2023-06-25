@@ -12,6 +12,7 @@ on:
 
 jobs:
   plan-and-apply:
+    permissions: { id-token: write, contents: read }
     strategy:
       matrix:
         environment:
