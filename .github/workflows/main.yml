@@ -9,19 +9,14 @@ on:
   pull_request:
     branches: [main]
 
-
 jobs:
   plan-and-apply:
     permissions: { id-token: write, contents: read }
     strategy:
       matrix:
         environment:
-        - staging
-        - production
+          - staging
+          - production
     uses: ./.github/workflows/template.yml
     with:
       environment: ${{ matrix.environment }}
-      access_key_id: ${{ secrets.ACCESS_KEY_ID }}
-      secret_access_key: ${{ secrets.SECRET_ACCESS_KEY }}
-      endpoint_url: ${{ secrets.ENDPOINT_URL }}
-      bucket: ${{ secrets.BUCKET }}

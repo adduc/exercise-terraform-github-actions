@@ -3,14 +3,15 @@ on:
     inputs:
       environment:
         type: string
+    secrets:
       access_key_id:
-        type: string
+        required: true
       secret_access_key:
-        type: string
+        required: true
       endpoint_url:
-        type: string
+        required: true
       bucket:
-        type: string
+        required: true
 
 jobs:
   plan:
@@ -34,8 +35,8 @@ jobs:
           echo "s3 =" >> ~/.aws/config
           echo "    signature_version = s3v4" >> ~/.aws/config
           echo "[default]" >> ~/.aws/credentials
-          echo "aws_access_key_id=${{ inputs.access_key_id }}" >> ~/.aws/credentials
-          echo "aws_secret_access_key=${{ inputs.secret_access_key }}" >> ~/.aws/credentials
+          echo "aws_access_key_id=${{ secrets.ACCESS_KEY_ID }}" >> ~/.aws/credentials
+          echo "aws_secret_access_key=${{ secrets.SECRET_ACCESS_KEY }}" >> ~/.aws/credentials
 
       - name: Checkout repository
         run: |
@@ -82,8 +83,8 @@ jobs:
         if: steps.plan.outputs.exit_code == 2
         run: |
           tar -czf tfplan.tar.gz --exclude .git --exclude .github ./
-          alias aws='aws --endpoint-url ${{ inputs.endpoint_url }}'
-          aws s3 cp tfplan.tar.gz s3://${{ inputs.bucket }}/${{ github.repository }}/${{ github.sha }}-${{ inputs.environment }}.tar.gz
+          alias aws='aws --endpoint-url ${{ secrets.ENDPOINT_URL }}'
+          aws s3 cp tfplan.tar.gz s3://${{ secrets.BUCKET }}/${{ github.repository }}/${{ github.sha }}-${{ inputs.environment }}.tar.gz
 
   apply:
     needs: plan
@@ -106,8 +107,8 @@ jobs:
           echo "s3 =" >> ~/.aws/config
           echo "    signature_version = s3v4" >> ~/.aws/config
           echo "[default]" >> ~/.aws/credentials
-          echo "aws_access_key_id=${{ inputs.access_key_id }}" >> ~/.aws/credentials
-          echo "aws_secret_access_key=${{ inputs.secret_access_key }}" >> ~/.aws/credentials
+          echo "aws_access_key_id=${{ secrets.ACCESS_KEY_ID }}" >> ~/.aws/credentials
+          echo "aws_secret_access_key=${{ secrets.SECRET_ACCESS_KEY }}" >> ~/.aws/credentials
 
       - name: Checkout repository
         run: |
@@ -119,8 +120,8 @@ jobs:
 
       - name: Pull tfplan from S3
         run: |
-          alias aws='aws --endpoint-url ${{ inputs.endpoint_url }}'
-          aws s3 cp s3://${{ inputs.bucket }}/${{ github.repository }}/${{ github.sha }}-${{ inputs.environment }}.tar.gz tfplan.tar.gz
+          alias aws='aws --endpoint-url ${{ secrets.ENDPOINT_URL }}'
+          aws s3 cp s3://${{ secrets.BUCKET }}/${{ github.repository }}/${{ github.sha }}-${{ inputs.environment }}.tar.gz tfplan.tar.gz
           tar xf tfplan.tar.gz
 
       - name: Terraform Show
@@ -128,7 +129,5 @@ jobs:
 
       - name: Terraform Apply
         run: terraform apply -auto-approve tfplan
-
-
 # @todo use provider cache
 # @todo step summary (no color? port color to latex color?)
