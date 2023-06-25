@@ -1,19 +1,11 @@
-name: Terraform Plan and Apply
-
 on:
-  workflow_dispatch:
-  schedule:
-    - cron: "0 0 * * 1" # every Monday at 00:00 UTC
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+  workflow_call:
+    inputs:
+      environment:
+        type: string
 
 jobs:
   plan:
-    strategy:
-      matrix:
-        environment: [staging, production]
     runs-on: ubuntu-22.04
     permissions: { id-token: write, contents: read }
     container:
@@ -24,6 +16,8 @@ jobs:
     outputs:
       exit_code: ${{ steps.plan.outputs.exit_code }}
     steps:
+      - run: echo ${{ inputs.environment }}
+
       - name: Prepare AWS
         run: |
           mkdir ~/.aws
@@ -81,13 +75,10 @@ jobs:
         run: |
           tar -czf tfplan.tar.gz --exclude .git --exclude .github ./
           alias aws='aws --endpoint-url ${{ secrets.ENDPOINT_URL }}'
-          aws s3 cp tfplan.tar.gz s3://${{ secrets.BUCKET }}/${{ github.repository }}/${{ github.sha }}.tar.gz
+          aws s3 cp tfplan.tar.gz s3://${{ secrets.BUCKET }}/${{ github.repository }}/${{ github.sha }}-${{ inputs.environment }}.tar.gz
 
   apply:
-    strategy:
-      matrix:
-        environment: [staging, production]
-    needs: plan-${{ matrix.environment }}
+    needs: plan
     if: needs.plan.outputs.exit_code == 2
     environment: production
     runs-on: ubuntu-22.04
@@ -97,6 +88,8 @@ jobs:
     defaults:
       run: { shell: sh }
     steps:
+      - run: echo ${{ inputs.environment }}
+
       - name: Prepare AWS
         run: |
           mkdir ~/.aws
@@ -119,7 +112,7 @@ jobs:
       - name: Pull tfplan from S3
         run: |
           alias aws='aws --endpoint-url ${{ secrets.ENDPOINT_URL }}'
-          aws s3 cp s3://${{ secrets.BUCKET }}/${{ github.repository }}/${{ github.sha }}.tar.gz tfplan.tar.gz
+          aws s3 cp s3://${{ secrets.BUCKET }}/${{ github.repository }}/${{ github.sha }}-${{ inputs.environment }}.tar.gz tfplan.tar.gz
           tar xf tfplan.tar.gz
 
       - name: Terraform Show
