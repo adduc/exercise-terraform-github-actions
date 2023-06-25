@@ -1,0 +1,22 @@
+name: Terraform Plan and Apply
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 0 * * 1" # every Monday at 00:00 UTC
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+
+jobs:
+  plan-and-apply:
+    strategy:
+      matrix:
+        environment:
+        - staging
+        - production
+    uses: ./.github/workflows/template.yml
+    with:
+      environment: ${{ matrix.environment }}
