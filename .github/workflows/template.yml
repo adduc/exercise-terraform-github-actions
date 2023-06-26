@@ -103,7 +103,8 @@ jobs:
 
   apply:
     needs: plan
-    if: needs.plan.outputs.exit_code == 2
+    # only run if drift is detected and not on pull request
+    if: needs.plan.outputs.exit_code == 2 && github.event_name != 'pull_request'
     environment: ${{ inputs.environment }}
     runs-on: ubuntu-22.04
     container:
