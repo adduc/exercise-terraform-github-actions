@@ -169,3 +169,5 @@ jobs:
           ) | tee "$GITHUB_STEP_SUMMARY"
 
 # @todo use color for step summary (convert to latex color markdown)
+
+# @todo use github api to cancel pending apply jobs for this environment after this apply job completes.
