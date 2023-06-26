@@ -87,7 +87,7 @@ jobs:
       - name: Prepare job summary
         run: |
           (
-            echo "# Terraform Plan (${{ inputs.environment }})";
+            echo "# ${{ inputs.environment }}: Terraform Plan";
             echo '```';
             terraform show -no-color tfplan;
             echo '```';
@@ -146,6 +146,7 @@ jobs:
           key: ${{ runner.os }}-terraform-${{ hashFiles('**/.terraform.lock.hcl') }}
           restore-keys: |
             ${{ runner.os }}-terraform-
+          lookup-only: true
 
       - name: Pull tfplan from S3
         run: |
@@ -162,7 +163,7 @@ jobs:
       - name: Terraform Apply
         run: |
           (
-            echo "# Terraform Apply (${{ inputs.environment }})";
+            echo "# ${{ inputs.environment }}: Terraform Apply";
             echo '```';
             terraform apply -auto-approve -no-color tfplan;
             echo '```';
