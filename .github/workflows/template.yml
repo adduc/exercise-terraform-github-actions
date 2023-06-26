@@ -139,14 +139,13 @@ jobs:
           mkdir -p ~/.terraform.d/plugin-cache
 
       - name: Setup Terraform Cache
-        uses: actions/cache@v3
+        uses: actions/cache/restore@v3
         with:
           path: |
             ~/.terraform.d/plugin-cache
           key: ${{ runner.os }}-terraform-${{ hashFiles('**/.terraform.lock.hcl') }}
           restore-keys: |
             ${{ runner.os }}-terraform-
-          lookup-only: true
 
       - name: Pull tfplan from S3
         run: |
